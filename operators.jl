@@ -12,7 +12,7 @@ function random_candidate(problem::Problem)
     )
 end
 
-function PM(parent, probability=1, distribution_index=20.0)
+function PM(parent::Solution, probability=1, distribution_index=20.0)
     child = copy(parent)
     problem = child.problem
 
@@ -20,7 +20,7 @@ function PM(parent, probability=1, distribution_index=20.0)
         probability /= sum([typeof(t) == MOGA_Real for t in problem.var_types])
     end
 
-    for i in range(problem.nvars)
+    for i in 1:problem.nvars
         if typeof(problem.var_types[i]) == MOGA_Real
             if rand() < probability
                 child.x[i] = pm_mutation(child.x[i],
@@ -34,7 +34,7 @@ function PM(parent, probability=1, distribution_index=20.0)
     return child
 end
 
-function pm_mutation(x, lb, ub, di)
+function pm_mutation(x::Float64, lb::Float64, ub::Float64, di::Float64)
     u = rand()
     dx = ub - lb
 
@@ -53,7 +53,7 @@ function pm_mutation(x, lb, ub, di)
     return x
 end
 
-function SBX(p1, p2, probability=1.0, distribution_index=15.0)
+function SBX(p1::Solution, p2::Solution, probability=1.0, distribution_index=15.0)
     c1 = copy(p1)
     c2 = copy(p2)
 
@@ -68,7 +68,7 @@ function SBX(p1, p2, probability=1.0, distribution_index=15.0)
                     lb = problem.var_types[i].min_value
                     ub = problem.var_types[i].max_value
 
-                    x1, x2 = sbx_crossover(x1, x2, lu, ub, distribution_index)
+                    x1, x2 = sbx_crossover(x1, x2, lb, ub, distribution_index)
 
                     c1.x[i] = x1
                     c2.x[i] = x2
@@ -81,7 +81,7 @@ function SBX(p1, p2, probability=1.0, distribution_index=15.0)
     return c1, c2
 end
 
-function sbx_crossover(x1, x2, lb, ub, di)
+function sbx_crossover(x1::Float64, x2::Float64, lb::Float64, ub::Float64, di::Float64)
     dx = x2 - x1
 
     if dx > eps()
@@ -93,11 +93,11 @@ function sbx_crossover(x1, x2, lb, ub, di)
             y2 = x1
         end
 
-        beta = 1.0 / (1.0 + (2.0 * (y1 - lb) / (y2 - y1)))
-        alpha = 2.0 - beta ^ (di + 1.0)
-
         rx = rand()
 
+        # calc x1
+        b = 1.0 / (1.0 + (2.0 * (y1 - lb) / (y2 - y1)))
+        alpha = 2.0 - b ^ (di + 1.0)
         if rx <= 1.0 / alpha
             alpha *= rx
             betaq = alpha ^ (1.0/(di+1.0))
@@ -105,11 +105,11 @@ function sbx_crossover(x1, x2, lb, ub, di)
             alpha = 1.0 / (2.0 - alpha*rx)
             betaq = alpha ^ (1.0/(di+1.0))
         end
-
         x1 = 0.5 * ((y1 + y2) - betaq * (y2 - y1))
-        beta = 1.0 / (1.0 + (2.0 * (ub - y2) / (y2 - y1)))
-        alpha = 2.0 - beta^(di + 1.0)
 
+        # calc x2
+        b = 1.0 / (1.0 + (2.0 * (ub - y2) / (y2 - y1)))
+        alpha = 2.0 - b^(di + 1.0)
         if rx <= 1.0 / alpha
             alpha = alpha * rx
             betaq = alpha ^ (1.0 / (di + 1.0))
@@ -118,7 +118,6 @@ function sbx_crossover(x1, x2, lb, ub, di)
             alpha = 1.0 / (2.0 - alpha)
             betaq = alpha ^ (1.0 / (di + 1.0))
         end
-
         x2 = 0.5 * ((y1 + y2) + betaq * (y2 - y1))
 
         # randomly swap the values
@@ -133,6 +132,6 @@ function sbx_crossover(x1, x2, lb, ub, di)
     end
 end
 
-function clip(x, lb, ub)
+function clip(x::Real, lb::Real, ub::Real)
     return max(lb, min(x, ub))
 end
