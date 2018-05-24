@@ -2,7 +2,7 @@ import Base.copy
 
 struct Problem
     nobjs::Int64
-    directions::Vector{Bool}
+    directions::Vector{Bool}    # false -> minimize, true -> maximize
     nvars::Int64
     var_types::Vector{MOGA_Type}
 end

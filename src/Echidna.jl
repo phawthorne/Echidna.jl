@@ -12,4 +12,7 @@ export random_candidate, PM, SBX
 include("algorithms.jl")
 export NSGAII
 
+include("problems.jl")
+export ZDT1
+
 end # module
