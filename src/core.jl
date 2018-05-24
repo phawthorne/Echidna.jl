@@ -1,6 +1,4 @@
 import Base.copy
-include("var_types.jl")
-
 
 struct Problem
     nobjs::Int64

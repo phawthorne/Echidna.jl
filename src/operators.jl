@@ -1,6 +1,3 @@
-include("core.jl")
-include("var_types.jl")
-
 function random_candidate(problem::Problem)
     return Solution(
         problem,
@@ -18,7 +15,7 @@ function tournament_selector(population::Vector{Solution}, tournament_size::Int;
 end
 
 
-function PM(parent::Solution; probability=1, distribution_index=20.0)
+function PM(parent::Solution, probability=1, distribution_index=20.0)
     child = copy(parent)
     problem = child.problem
 

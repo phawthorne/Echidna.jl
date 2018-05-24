@@ -1,6 +1,4 @@
 using Parameters
-include("core.jl")
-
 
 @with_kw mutable struct NSGAII <: Algorithm
     problem::Problem
