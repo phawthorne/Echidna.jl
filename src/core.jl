@@ -9,6 +9,8 @@ struct Problem
     var_types::Vector{MOGA_Type}
 end
 
+abstract type Algorithm end
+
 # Solutions
 mutable struct Solution
     problem::Problem

@@ -12,7 +12,13 @@ function random_candidate(problem::Problem)
     )
 end
 
-function PM(parent::Solution, probability=1, distribution_index=20.0)
+function tournament_selector(population::Vector{Solution}, tournament_size::Int;
+                             dominance::Function=compare_pareto_dominance)
+    return 0
+end
+
+
+function PM(parent::Solution; probability=1, distribution_index=20.0)
     child = copy(parent)
     problem = child.problem
 
