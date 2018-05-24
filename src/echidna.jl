@@ -1,4 +1,4 @@
-module echidna
+module Echidna
 
 include("var_types.jl")
 export MOGA_Real, MOGA_Binary, MOGA_Integer
