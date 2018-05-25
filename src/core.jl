@@ -2,9 +2,10 @@ import Base.copy
 
 struct Problem
     nobjs::Int64
-    directions::Vector{Bool}
+    directions::Vector{Bool}    # false -> minimize, true -> maximize
     nvars::Int64
     var_types::Vector{MOGA_Type}
+    eval_fn::Function
 end
 
 abstract type Algorithm end
@@ -30,6 +31,14 @@ function copy(s::Solution)
     )
 end
 
+function evaluate!(s::Solution)
+    if !s.evaluated
+        s.objectives = s.problem.eval_fn(s.x)
+        s.evaluated = true
+    end
+    return s.objectives
+end
+
 # Archives
 mutable struct Archive
     dominance::Function
@@ -37,7 +46,7 @@ mutable struct Archive
 end
 
 function insert_solution!(archive::Archive, solution::Solution)
-    flags = [archive.dominance(arch_sol, solution) for
+    flags = [archive.dominance(solution, arch_sol) for
              arch_sol in archive.solutions]
     dominates = [x > 0 for x in flags]
     nondominated = [x == 0 for x in flags]
@@ -160,7 +169,7 @@ function crowding_distance(solutions)
 
     if length(solutions) < 3
         for s in solutions
-            s.crowding_distance[1] = Inf
+            s.crowding_distance = Inf
         end
     else
         # main case
