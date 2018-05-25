@@ -37,7 +37,7 @@ mutable struct Archive
 end
 
 function insert_solution!(archive::Archive, solution::Solution)
-    flags = [archive.dominance(arch_sol, solution) for
+    flags = [archive.dominance(solution, arch_sol) for
              arch_sol in archive.solutions]
     dominates = [x > 0 for x in flags]
     nondominated = [x == 0 for x in flags]
@@ -160,7 +160,7 @@ function crowding_distance(solutions)
 
     if length(solutions) < 3
         for s in solutions
-            s.crowding_distance[1] = Inf
+            s.crowding_distance = Inf
         end
     else
         # main case
