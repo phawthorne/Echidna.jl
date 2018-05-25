@@ -9,9 +9,21 @@ function random_candidate(problem::Problem)
     )
 end
 
+
 function tournament_selector(population::Vector{Solution}, tournament_size::Int;
                              dominance::Function=compare_pareto_dominance)
-    return 0
+    popsize = length(population)
+
+    winner = rand(population)
+
+    for i in 1:tournament_size-1
+        challenger = rand(population)
+        if dominance(winner, challenger) > 0
+            winner = challenger
+        end
+    end
+
+    return winner
 end
 
 
