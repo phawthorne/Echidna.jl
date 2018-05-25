@@ -5,6 +5,7 @@ struct Problem
     directions::Vector{Bool}    # false -> minimize, true -> maximize
     nvars::Int64
     var_types::Vector{MOGA_Type}
+    eval_fn::Function
 end
 
 abstract type Algorithm end
@@ -28,6 +29,14 @@ function copy(s::Solution)
         s.crowding_distance,
         s.rank
     )
+end
+
+function evaluate!(s::Solution)
+    if !s.evaluated
+        s.objectives = s.problem.eval_fn(s.x)
+        s.evaluated = true
+    end
+    return s.objectives
 end
 
 # Archives
