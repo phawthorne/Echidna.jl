@@ -1,3 +1,8 @@
+"""
+    random_candidate(problem::Problem)
+
+Returns a randomized `Solution` based on specification in `problem.var_types`.
+"""
 function random_candidate(problem::Problem)
     return Solution(
         problem,
@@ -67,6 +72,7 @@ function pm_mutation(x::Float64, lb::Float64, ub::Float64, di::Float64)
 
     return x
 end
+
 
 function SBX(p1::Solution, p2::Solution, probability=1.0, distribution_index=15.0)
     c1 = copy(p1)
