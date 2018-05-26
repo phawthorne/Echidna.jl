@@ -16,4 +16,7 @@ export NSGAII, run_nsgaii
 include("problems.jl")
 export ZDT1
 
+include("problems.jl")
+export ZDT1
+
 end # module
