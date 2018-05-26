@@ -1,3 +1,8 @@
+"""
+    random_candidate(problem::Problem)
+
+Returns a randomized `Solution` based on specification in `problem.var_types`.
+"""
 function random_candidate(problem::Problem)
     return Solution(
         problem,
@@ -9,9 +14,21 @@ function random_candidate(problem::Problem)
     )
 end
 
+
 function tournament_selector(population::Vector{Solution}, tournament_size::Int;
                              dominance::Function=compare_pareto_dominance)
-    return 0
+    popsize = length(population)
+
+    winner = rand(population)
+
+    for i in 1:tournament_size-1
+        challenger = rand(population)
+        if dominance(winner, challenger) > 0
+            winner = challenger
+        end
+    end
+
+    return winner
 end
 
 
@@ -56,6 +73,7 @@ function pm_mutation(x::Float64, lb::Float64, ub::Float64, di::Float64)
     return x
 end
 
+
 function SBX(p1::Solution, p2::Solution, probability=1.0, distribution_index=15.0)
     c1 = copy(p1)
     c2 = copy(p2)
@@ -85,7 +103,7 @@ function SBX(p1::Solution, p2::Solution, probability=1.0, distribution_index=15.
 end
 
 function sbx_crossover(x1::Float64, x2::Float64, lb::Float64, ub::Float64, di::Float64)
-    dx = x2 - x1
+    dx = abs(x2 - x1)
 
     if dx > eps()
         if x2 > x1
@@ -131,8 +149,8 @@ function sbx_crossover(x1::Float64, x2::Float64, lb::Float64, ub::Float64, di::F
         x1 = clip(x1, lb, ub)
         x2 = clip(x2, lb, ub)
 
-        return x1, x2
     end
+    return x1, x2
 end
 
 function clip(x::Real, lb::Real, ub::Real)

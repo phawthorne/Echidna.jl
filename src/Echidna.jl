@@ -11,7 +11,10 @@ include("operators.jl")
 export random_candidate, PM, SBX
 
 include("algorithms.jl")
-export NSGAII
+export NSGAII, run_nsgaii
+
+include("problems.jl")
+export ZDT1
 
 include("problems.jl")
 export ZDT1

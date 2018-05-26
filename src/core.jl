@@ -194,3 +194,12 @@ function crowding_distance(solutions)
         end
     end
 end
+
+function nondominated_truncate(pop::Vector{Solution}, num::Int64,
+                               dominance::Function=nondominated_cmp)
+    # maybe more efficient to not sort the whole thing but pull out by
+    # rank until reach the marginal rank class. Not sure. This is easy. 
+    k(c1, c2) = dominance(c1, c2) < 0
+    sorted = sort(pop, lt=k)
+    return sorted[1:num]
+end
