@@ -7,7 +7,7 @@ using Parameters
     n_iters::Int64
 end
 
-function nsgaii(algo::NSGAII)
+function run_nsgaii(algo::NSGAII)
     population = nsgaii_initialization(algo)
 
     for i in 1:algo.n_iters
