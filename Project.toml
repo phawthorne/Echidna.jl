@@ -1,0 +1,6 @@
+authors = ["Peter Hawthorne <hawt0010@umn.edu>"]
+name = "Echidna"
+uuid = "47cd21f4-9f3c-11e8-2f5c-c95eae34bde6"
+version = "0.1.0"
+
+[deps]

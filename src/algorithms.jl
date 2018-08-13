@@ -20,7 +20,7 @@ function nsgaii_initialization(algo::NSGAII)
     N = algo.population_size
     population = [random_candidate(algo.problem) for i in 1:N]
     for p in population
-        p.objectives = algo.eval_fn(p)
+        p.objectives = algo.eval_fn(p.x)
         p.evaluated = true
     end
     # assign ranks and crowding_distance
@@ -36,7 +36,7 @@ function nsgaii_iteration(algo::NSGAII, population::Vector{Solution})
         p2 = tournament_selector(population, 2, dominance=nondominated_cmp)
         c1, c2 = [PM(c) for c in SBX(p1, p2)]
         for c in [c1, c2]
-            c.objectives = algo.eval_fn(c)
+            c.objectives = algo.eval_fn(c.x)
             c.evaluated = true
         end
         push!(population, c1, c2)
