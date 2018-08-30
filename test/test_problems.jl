@@ -1,5 +1,5 @@
 using Echidna
-using Base.Test
+using Test
 
 
 # TEST ZDT1

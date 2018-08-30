@@ -1,5 +1,5 @@
 using Echidna
-using Base.Test
+using Test
 
 # test for compare_pareto_dominance
 nobjs = 2

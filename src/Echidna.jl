@@ -11,12 +11,12 @@ include("operators.jl")
 export random_candidate, PM, SBX
 
 include("algorithms.jl")
-export NSGAII, run_nsgaii
+export NSGAII, run_nsgaii, NSGAIII, run, init_pop, iter_generation
 
 include("problems.jl")
 export ZDT1
 
-include("problems.jl")
-export ZDT1
+include("weights.jl")
+export generate_regular_reference_points, generate_recursive
 
 end # module

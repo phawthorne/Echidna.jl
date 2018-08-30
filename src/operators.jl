@@ -1,3 +1,5 @@
+using Random
+
 """
     random_candidate(problem::Problem)
 
@@ -33,7 +35,7 @@ end
 
 
 function PM(parent::Solution, probability=1, distribution_index=20.0)
-    child = copy(parent)
+    child = deepcopy(parent)
     problem = child.problem
 
     if typeof(probability) <: Int
@@ -44,8 +46,8 @@ function PM(parent::Solution, probability=1, distribution_index=20.0)
         if typeof(problem.var_types[i]) == MOGA_Real
             if rand() < probability
                 child.x[i] = pm_mutation(child.x[i],
-                                         problem.var_types[].min_value,
-                                         problem.var_types[].max_value,
+                                         problem.var_types[1].min_value,
+                                         problem.var_types[1].max_value,
                                          distribution_index)
                 child.evaluated = false
             end
@@ -142,7 +144,7 @@ function sbx_crossover(x1::Float64, x2::Float64, lb::Float64, ub::Float64, di::F
         x2 = 0.5 * ((y1 + y2) + betaq * (y2 - y1))
 
         # randomly swap the values
-        if bitrand()[1]
+        if Random.bitrand()[1]
             x1, x2 = x2, x1
         end
 

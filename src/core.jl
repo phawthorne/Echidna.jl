@@ -9,9 +9,10 @@ struct Problem
 end
 
 abstract type Algorithm end
+abstract type GASolution end
 
 # Solutions
-mutable struct Solution
+mutable struct Solution <: GASolution
     problem::Problem
     x::Vector{Float64}
     evaluated::Bool
@@ -198,8 +199,12 @@ end
 function nondominated_truncate(pop::Vector{Solution}, num::Int64,
                                dominance::Function=nondominated_cmp)
     # maybe more efficient to not sort the whole thing but pull out by
-    # rank until reach the marginal rank class. Not sure. This is easy. 
+    # rank until reach the marginal rank class. Not sure. This is easy.
     k(c1, c2) = dominance(c1, c2) < 0
     sorted = sort(pop, lt=k)
     return sorted[1:num]
+end
+
+function reference_point_truncate(pop::Vector{Solution}, N::Int64)
+    return pop
 end

@@ -7,7 +7,7 @@
 # returns a valid random value (i.e. within the specified bounds)
 
 
-import Base.Random.rand
+using Random
 
 abstract type MOGA_Type end
 
@@ -24,14 +24,19 @@ struct MOGA_Integer <: MOGA_Type
     max_value::Int64
 end
 
-function rand(t::MOGA_Real)
+
+#Random.rand(rng::AbstractRNG, d::Random.SamplerTrivial{Die}) = rand(rng, 1:d[].nsides);
+# function Random.rand(rng::AbstractRNG, t::MOGA_Real)
+#     return (t.max_value - t.min_value) * rand() + t.min_value
+# end
+#
+# Random.rand(rng::AbstractRNG, t::Random.SamplerTrivial{MOGA_Binary}) = rand(Bool)
+function Random.rand(t::MOGA_Real)
     return (t.max_value - t.min_value) * rand() + t.min_value
 end
 
-function rand(t::MOGA_Binary)
-    return rand() > 0.5
-end
+Random.rand(t::MOGA_Binary) = rand(Bool)
 
-function rand(t::MOGA_Integer)
+function Random.rand(t::MOGA_Integer)
     return Int64(floor((1 + t.max_value - t.min_value) * rand()) + t.min_value)
 end

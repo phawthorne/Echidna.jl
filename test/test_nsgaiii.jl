@@ -1,9 +1,10 @@
 using Echidna
 using Test
 
-print("Testing NSGAII on ZDT1", "\n")
-nobjs = 2
+print("Testing NSGAIII on ZDT1", "\n")
+nobjs = 3
 nvars = 30
+ndivs = 5
 pop_size = 100
 n_iters = 10
 zdt1_problem = Problem(
@@ -12,6 +13,7 @@ zdt1_problem = Problem(
     ZDT1
 )
 
-config = NSGAII(zdt1_problem, ZDT1, pop_size, n_iters)
-result = run_nsgaii(config)
+
+config = NSGAIII(zdt1_problem, ZDT1, nobjs, ndivs)
+result = run(config)
 @test length(result) == pop_size
