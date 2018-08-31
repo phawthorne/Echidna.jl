@@ -121,7 +121,7 @@ function nondominated(solutions)
 end
 
 function nondominated_sort(solutions)
-    rank::Int64 = 0
+    rank::Int64 = 1  # TODO 08/30/18 - I just changed this to 1 to be Julian - hope nothing breaks
 
     for s in solutions
         s.rank = -1
@@ -205,6 +205,82 @@ function nondominated_truncate(pop::Vector{Solution}, num::Int64,
     return sorted[1:num]
 end
 
-function reference_point_truncate(pop::Vector{Solution}, N::Int64)
+function reference_point_truncate(pop::Vector{Solution}, N::Int64,
+                                  refpts::Array{Float64, 2})
+    # find cutoff dominance rank
+    ranks = [p.rank for p in pop]
+    rankcounts = zeros(Int64, maximum(ranks))
+    for r in ranks
+        rankcounts[r] += 1
+    end
+    marginalrank = findfirst(x -> x >= N, cumsum(rankcounts))
+
+    St = [p for p in pop if p.rank <= marginalrank]
+    topick = N - length(St)
+    if topick == 0
+        return St
+    end
+    # else:
+    marginalfront = [p for p in newpop if p.rank == marginalrank]
+
+    ## Get normalized values
+    M = length(St[1].objectives)
+    zmin = zeros(M)
+    for j = 1:M
+        zmin = minimum([p.objectives[j] for p in St])
+    end
+    fp = [p.objectives - zmin for p in St]
+
+    ## FIND EXTREME VALUES
+    ## the goal of this operation is to find, for each axis j, the solution that
+    ## minimizes the value of non-j values. This isn't exactly the same as
+    ## maximizing j if the solution space has a weird shape.
+    ##
+    ## EXIT: extremepts contains the indices of solutions in St that are the
+    ## extreme points for each objective axis.
+    ##
+    ## TODO: I'm not clear about the max vs mins here...
+    extremepts = [-1 for j = 1:M]
+    for j = 1:M
+        w = 0.00001 * ones(M)
+        w[j] = 1.0
+        minval = -Inf
+        for (i, p) in enumerate(St)
+            val = maximum((p.objectives - zmin) ./ w)
+            if val > minval
+                extremepts[j] = i
+                minval = val
+            end
+        end
+    end
+
+    ## FIND INTERCEPT VALUES
+    ## ENTER: Have found one extreme point per objective. These define a hyper-plane.
+    ## EXIT: Find the intersections of the hyper-plane with each objective axis.
+    ##    These will be used to rescale the objective scores for these axes.
+    ##
+    b = ones(nobjs)
+    Z = zeros(nobjs, nobjs)
+    for r in 1:nobjs
+        index = extremepts[r]
+        for c in 1:nobjs
+            Z[r,c] = fp[r,c]
+        end
+    end
+    a = Z\b
+
+    fn = [f ./ a for f in fp]
+
+    ## ASSOCIATE SOLUTIONS WITH REFERENCE POINTS
+    ## Do some linear algebra to find distances between the objective values
+    ## and lines passing through each reference point.
+
+
+    ## NICHING PROCEDURE
+    ## select points from the marginal front to include in P_{t+1}
+    ## Prefer points associated with reference points with fewest associated
+    ## solutions.
+
+
     return pop
 end

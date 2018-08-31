@@ -16,6 +16,21 @@ function random_candidate(problem::Problem)
     )
 end
 
+"""
+    candidate_from_genome(problem::Problem, genome)
+
+Returns a Solution object that packs genome as the solution's decision variable.
+"""
+function candidate_from_genome(problem::Problem, genome)
+    return Solution(
+        problem,
+        genome,
+        false,
+        zeros(problem.nobjs),
+        0.0,
+        0
+    )
+end
 
 function tournament_selector(population::Vector{Solution}, tournament_size::Int;
                              dominance::Function=compare_pareto_dominance)

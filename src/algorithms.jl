@@ -78,24 +78,20 @@ function NSGAIII(problem::Problem, evalfn::Function, ndivs::Int, niters::Int)
     )
 end
 
-function run(algo::NSGAIII)
-    nobjs = 3
-    ndivs = 10
-    algo.reference_points = generate_regular_reference_points(nobjs, ndivs)
-    nrps = size(algo.reference_points)[1]
-    algo.population_size = Int(ceil(nrps/4)*4)
+function garun(algo::NSGAIII; seedpop::Vector{Solution}=Vector{Solution}())
+    println("Echidna.garun")
 
-    population = init_pop(algo)
+    population = init_pop(algo, seedpop=seedpop)
 
-    for g in 1:algo.n_iters
-        println("generation: ", g)
-        population = iter_generation(algo, population)
-    end
+    # for g in 1:algo.n_iters
+    #     println("generation: ", g)
+    #     population = iter_generation(algo, population)
+    # end
 
     return population
 end
 
-function init_pop(algo::NSGAIII; seedpop::Vector{GASolution}=Vector{GASolution}())
+function init_pop(algo::NSGAIII; seedpop::Vector{Solution}=Vector{Solution}())
     N = algo.population_size
     population = vcat(seedpop,
                       [random_candidate(algo.problem) for i in 1:(N-length(seedpop))])

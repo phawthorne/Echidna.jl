@@ -8,10 +8,10 @@ export Problem, Algorithm, Solution, Archive, evaluate!,
        insert_solutions!, insert_solution!, compare_pareto_dominance
 
 include("operators.jl")
-export random_candidate, PM, SBX
+export random_candidate, candidate_from_genome, PM, SBX
 
 include("algorithms.jl")
-export NSGAII, run_nsgaii, NSGAIII, run, init_pop, iter_generation
+export NSGAII, run_nsgaii, NSGAIII, garun, init_pop, iter_generation
 
 include("problems.jl")
 export ZDT1
