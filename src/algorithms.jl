@@ -7,32 +7,31 @@ using Parameters
     n_iters::Int64
 end
 
-function run_nsgaii(algo::NSGAII)
-    population = nsgaii_initialization(algo)
+function garun(algo::NSGAII)
+    population = init_pop(algo)
 
     for i in 1:algo.n_iters
         print("$i\n")
-        population = nsgaii_iteration(algo, population)
+        population = iter_generation(algo, population)
     end
     return population
 end
 
-function nsgaii_initialization(algo::NSGAII)
+function init_pop(algo::NSGAII; seedpop::Vector{Solution}=Vector{Solution}())
     N = algo.population_size
-    population = [random_candidate(algo.problem) for i in 1:N]
-    population[1].x .= 0.0001   # This is a hack for the NNM GA
-                                # TODO: allow some seeding
+    population = vcat(seedpop,
+                      [random_candidate(algo.problem) for i in 1:(N-length(seedpop))])
 
     for p in population
         p.objectives = algo.eval_fn(p.x)
         p.evaluated = true
     end
-    # assign ranks and crowding_distance
+
     nondominated_sort(population)
     return population
 end
 
-function nsgaii_iteration(algo::NSGAII, population::Vector{Solution})
+function iter_generation(algo::NSGAII, population::Vector{Solution})
     # create N new indivs: binary tournament -> SBX/PM
     N = algo.population_size
     for i = 1:(N/2)
@@ -81,12 +80,19 @@ end
 function garun(algo::NSGAIII; seedpop::Vector{Solution}=Vector{Solution}())
     println("Echidna.garun")
 
-    population = init_pop(algo, seedpop=seedpop)
+    population = init_pop(algo; seedpop=seedpop)
 
-    # for g in 1:algo.n_iters
-    #     println("generation: ", g)
-    #     population = iter_generation(algo, population)
-    # end
+
+    for g in 1:algo.n_iters
+        println("")
+        println("generation: ", g)
+        # for p in population
+        #     println(p.objectives)
+        # end
+
+        # println("popsize: $(length(population))")
+        population = iter_generation(algo, population)
+    end
 
     return population
 end
@@ -125,7 +131,7 @@ function iter_generation(algo::NSGAIII, population::Vector{Solution})
     nondominated_sort(population)
 
     # select best N as next generation
-    population = reference_point_truncate(population, N)
+    population = reference_point_truncate(population, N, algo.reference_points)
 
     return population
 end

@@ -1,3 +1,4 @@
+using LinearAlgebra
 import Base.copy
 
 struct Problem
@@ -206,7 +207,10 @@ function nondominated_truncate(pop::Vector{Solution}, num::Int64,
 end
 
 function reference_point_truncate(pop::Vector{Solution}, N::Int64,
-                                  refpts::Array{Float64, 2})
+              refpts::Array{Float64, 2})
+
+    M = length(pop[1].objectives)
+
     # find cutoff dominance rank
     ranks = [p.rank for p in pop]
     rankcounts = zeros(Int64, maximum(ranks))
@@ -214,42 +218,39 @@ function reference_point_truncate(pop::Vector{Solution}, N::Int64,
         rankcounts[r] += 1
     end
     marginalrank = findfirst(x -> x >= N, cumsum(rankcounts))
+    @show marginalrank
 
-    St = [p for p in pop if p.rank <= marginalrank]
-    topick = N - length(St)
-    if topick == 0
-        return St
+    St = [i for i=1:length(pop) if pop[i].rank <= marginalrank]
+
+    if length(St) == N
+        return [copy(pop[i]) for i in St]
     end
     # else:
-    marginalfront = [p for p in newpop if p.rank == marginalrank]
+    Pnext = [i for i in St if pop[i].rank < marginalrank]
+    marginalfront = [i for i in St if pop[i].rank == marginalrank]
 
-    ## Get normalized values
-    M = length(St[1].objectives)
+    ## Find ideal point: minimal value for each objective across all solutions
     zmin = zeros(M)
     for j = 1:M
-        zmin = minimum([p.objectives[j] for p in St])
+        zmin[j] = minimum([pop[i].objectives[j] for i in St])
     end
-    fp = [p.objectives - zmin for p in St]
+    @show zmin
 
     ## FIND EXTREME VALUES
     ## the goal of this operation is to find, for each axis j, the solution that
     ## minimizes the value of non-j values. This isn't exactly the same as
     ## maximizing j if the solution space has a weird shape.
-    ##
-    ## EXIT: extremepts contains the indices of solutions in St that are the
-    ## extreme points for each objective axis.
-    ##
-    ## TODO: I'm not clear about the max vs mins here...
-    extremepts = [-1 for j = 1:M]
-    for j = 1:M
+    ## TODO: I think this is right, but I'm not clear about the max vs mins here...
+    expts = [-1 for j = 1:M]
+    for j = 1:M  # looping through objectives/axes
         w = 0.00001 * ones(M)
         w[j] = 1.0
-        minval = -Inf
-        for (i, p) in enumerate(St)
-            val = maximum((p.objectives - zmin) ./ w)
-            if val > minval
-                extremepts[j] = i
-                minval = val
+        maxval = -Inf
+        for i in St
+            val = maximum((pop[i].objectives) ./ w)
+            if val > maxval
+                expts[j] = i
+                maxval = val
             end
         end
     end
@@ -259,21 +260,38 @@ function reference_point_truncate(pop::Vector{Solution}, N::Int64,
     ## EXIT: Find the intersections of the hyper-plane with each objective axis.
     ##    These will be used to rescale the objective scores for these axes.
     ##
-    b = ones(nobjs)
-    Z = zeros(nobjs, nobjs)
-    for r in 1:nobjs
-        index = extremepts[r]
-        for c in 1:nobjs
-            Z[r,c] = fp[r,c]
+    b = ones(M)
+    Z = transpose(reduce(hcat, [pop[i].objectives for i in expts]))
+    # try Z = factorize(Z)
+    if rank(Z) == M
+        a = 1.0 ./ (Z\b)
+    else
+        maxvals = zeros(M)
+        for j=1:M
+            maxvals[j] = maximum(pop[i].objectives[j] for i in St)
         end
+        a = 1.0 ./ maxvals
     end
-    a = Z\b
 
-    fn = [f ./ a for f in fp]
+    # fp = [p.objectives - zmin for p in St] # ::Array{Array{Float64, 1}, 1}
+    # fn = [f ./ a for f in fp] # ::Array{Array{Float64, 1}, 1}
+
+    @show length(Pnext)
+    @show length(marginalfront)
+
+    fp = Array{Float64,1}[(pop[i].objectives - zmin) ./ a for i in Pnext]
+    fm = Array{Float64,1}[(pop[i].objectives - zmin) ./ a for i in marginalfront]
+
+    @show typeof(fp)
+    @show typeof(fm)
 
     ## ASSOCIATE SOLUTIONS WITH REFERENCE POINTS
     ## Do some linear algebra to find distances between the objective values
     ## and lines passing through each reference point.
+    fp_ref_index, fp_ref_distance = associate_points(fp, refpts)
+    fm_ref_index, fm_ref_distance = associate_points(fm, refpts)
+    fm_index_dict = Dict(i => d for (i, d) in zip(marginalfront, fm_ref_index))
+    fm_dist_dict = Dict(i => d for (i, d) in zip(marginalfront, fm_ref_distance))
 
 
     ## NICHING PROCEDURE
@@ -281,6 +299,48 @@ function reference_point_truncate(pop::Vector{Solution}, N::Int64,
     ## Prefer points associated with reference points with fewest associated
     ## solutions.
 
+    K = N - length(Pnext)
+    k = 1
+    refpt_deck = Set(1:length(refpts))
+    candidate_deck = Set(marginalfront) # set of indices into pop
 
-    return pop
+    ρ = Dict(rp => 0 for rp in refpt_deck)
+    for i in fp_ref_index
+        ρ[i] += 1
+    end
+
+    while k <= K
+        # find all reference points with minimal # of associated solutions from Pnext
+
+        ρmin = minimum(values(ρ))
+        # @show(ρmin)
+        Jmin = [r for r in refpt_deck if ρ[r] == ρmin]
+        # @show(Jmin)  # set of ref pts with minimal representation
+        jbar = rand(Jmin)
+        # find the set of all solutions in the marginal front associated with this ref point
+        Ij = [i for i in candidate_deck if fm_index_dict[i] == jbar]
+        if length(Ij) > 0
+            # pick a point
+            if ρ[jbar] == 0
+                # pick the closest point
+                distances = [fm_dist_dict[i] for i in Ij]
+                chosen = Ij[argmin(distances)]
+            else
+                # choose any of the points
+                chosen = rand(Ij)
+            end
+            push!(Pnext, chosen)
+            ρ[jbar] += 1
+            pop!(candidate_deck, chosen)
+            k += 1
+        else
+            # case with no solutions in marginal front associated with this
+            # reference point. Remove it from the pool for this iteration.
+            pop!(refpt_deck, jbar)
+            pop!(ρ, jbar)
+        end
+    end
+
+    newpop = [copy(pop[i]) for i in Pnext] ## TODO: copies necessary?
+    return newpop
 end
