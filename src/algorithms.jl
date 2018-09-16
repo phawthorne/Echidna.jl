@@ -7,8 +7,8 @@ using Parameters
     n_iters::Int64
 end
 
-function garun(algo::NSGAII)
-    population = init_pop(algo)
+function garun(algo::NSGAII; seedpop::Vector{Solution}=Vector{Solution}())
+    population = init_pop(algo; seedpop=seedpop)
 
     for i in 1:algo.n_iters
         print("$i\n")
@@ -82,15 +82,9 @@ function garun(algo::NSGAIII; seedpop::Vector{Solution}=Vector{Solution}())
 
     population = init_pop(algo; seedpop=seedpop)
 
-
     for g in 1:algo.n_iters
         println("")
         println("generation: ", g)
-        # for p in population
-        #     println(p.objectives)
-        # end
-
-        # println("popsize: $(length(population))")
         population = iter_generation(algo, population)
     end
 
