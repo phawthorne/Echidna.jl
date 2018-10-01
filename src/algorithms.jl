@@ -5,13 +5,18 @@ using Parameters
     eval_fn::Function
     population_size::Int64
     n_iters::Int64
+    archive::Archive
+    archive_frequency::Int64
 end
 
 function garun(algo::NSGAII; seedpop::Vector{Solution}=Vector{Solution}())
     population = init_pop(algo; seedpop=seedpop)
 
     for i in 1:algo.n_iters
-        print("$i\n")
+        if i % algo.archive_frequency == 0
+            insert_solutions!(algo.archive, population)
+        end
+        # println("$i")
         population = iter_generation(algo, population)
     end
     return population
@@ -54,6 +59,7 @@ function iter_generation(algo::NSGAII, population::Vector{Solution})
     return population
 end
 
+# TODO: add Archive to NSGAIII
 @with_kw mutable struct NSGAIII <: Algorithm
     problem::Problem
     eval_fn::Function
