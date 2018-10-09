@@ -9,6 +9,12 @@ using Parameters
     archive_frequency::Int64
 end
 
+function NSGAII(problem::Problem, eval_fn::Function, pop_size::Int64, n_iters::Int64)
+    archive = Archive(compare_pareto_dominance, Vector{Solution}())
+    archive_frequency = 100000000
+    return NSGAII(problem, eval_fn, pop_size, n_iters, archive, archive_frequency)
+end
+
 function garun(algo::NSGAII; seedpop::Vector{Solution}=Vector{Solution}())
     population = init_pop(algo; seedpop=seedpop)
 
