@@ -7,10 +7,11 @@ include("core.jl")
 export Problem, Algorithm, Solution, Archive, evaluate!,
        insert_solutions!, insert_solution!, compare_pareto_dominance,
        nondominated_cmp, nondominated_sort, crowding_distance,
-       nondominated_truncate, reference_point_truncate
+       nondominated_truncate, reference_point_truncate, copy, copyinto!
 
 include("operators.jl")
-export random_candidate, candidate_from_genome, PM, SBX, tournament_selector
+export random_candidate, candidate_from_genome, PM, PM!, SBX, SBX!
+       tournament_selector
 
 include("algorithms.jl")
 export NSGAII, run_nsgaii, NSGAIII, garun, init_pop, iter_generation

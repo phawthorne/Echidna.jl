@@ -50,7 +50,7 @@ end
 
 
 function PM(parent::Solution, probability=1, distribution_index=20.0)
-    child = deepcopy(parent)
+    child = copy(parent)
     problem = child.problem
 
     if typeof(probability) <: Int
@@ -70,6 +70,27 @@ function PM(parent::Solution, probability=1, distribution_index=20.0)
     end
     return child
 end
+
+
+function PM!(s::Solution, probability=1, distribution_index=20.0)
+    problem = s.problem
+    if typeof(probability) <: Int
+        probability /= sum([typeof(t) == MOGA_Real for t in problem.var_types])
+    end
+
+    for i in 1:problem.nvars
+        if typeof(problem.var_types[i]) == MOGA_Real
+            if rand() < probability
+                s.x[i] = pm_mutation(s.x[i],
+                                     problem.var_types[1].min_value,
+                                     problem.var_types[1].max_value,
+                                     distribution_index)
+                s.evaluated = false
+            end
+        end
+    end
+end
+
 
 function pm_mutation(x::Float64, lb::Float64, ub::Float64, di::Float64)
     u = rand()
@@ -117,6 +138,31 @@ function SBX(p1::Solution, p2::Solution, probability=1.0, distribution_index=15.
         end
     end
     return c1, c2
+end
+
+"Note that this function modifies s1 and s2"
+function SBX!(s1::Solution, s2::Solution, probability=1.0, distribution_index=15.0)
+    if rand() <= probability
+        problem = s1.problem
+        nvars = problem.nvars
+        for i = 1:nvars
+            if typeof(problem.var_types[i]) == MOGA_Real
+                if rand() <= 0.5
+                    x1 = s1.x[i]
+                    x2 = s2.x[i]
+                    lb = problem.var_types[i].min_value
+                    ub = problem.var_types[i].max_value
+
+                    x1, x2 = sbx_crossover(x1, x2, lb, ub, distribution_index)
+
+                    s1.x[i] = x1
+                    s2.x[i] = x2
+                    s1.evaluated = false
+                    s2.evaluated = false
+                end
+            end
+        end
+    end
 end
 
 function sbx_crossover(x1::Float64, x2::Float64, lb::Float64, ub::Float64, di::Float64)

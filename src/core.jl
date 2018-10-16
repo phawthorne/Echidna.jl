@@ -22,6 +22,7 @@ mutable struct Solution <: GASolution
     rank::Int64
 end
 
+"allocates a new solution that copies argument"
 function copy(s::Solution)
     return Solution(
         s.problem,
@@ -33,6 +34,17 @@ function copy(s::Solution)
     )
 end
 
+"Copies second argument solution into first argument"
+function copyinto!(s_to::Solution, s_from::Solution)
+    s_to.problem = s_from.problem
+    s_to.x .= s_from.x
+    s_to.evaluated = s_from.evaluated
+    s_to.objectives .= s_from.objectives
+    s_to.crowding_distance = s_from.crowding_distance
+    s_to.rank = s_from.rank
+end
+
+"Calls s.problem.eval_fn, saves into s.objectives, sets s.evaluated to true"
 function evaluate!(s::Solution)
     if !s.evaluated
         s.objectives = s.problem.eval_fn(s.x)
@@ -202,7 +214,7 @@ function nondominated_truncate(pop::Vector{Solution}, num::Int64,
     # maybe more efficient to not sort the whole thing but pull out by
     # rank until reach the marginal rank class. Not sure. This is easy.
     k(c1, c2) = dominance(c1, c2) < 0
-    sorted = sort(pop, lt=k)
+    sorted = sort(pop, lt=k)    # TODO: sort in place (sort!)?
     return sorted[1:num]
 end
 
