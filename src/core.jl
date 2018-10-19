@@ -1,18 +1,41 @@
 using LinearAlgebra
 import Base.copy
 
-struct Problem
-    nobjs::Int64
-    directions::Vector{Bool}    # false -> minimize, true -> maximize
-    nvars::Int64
-    var_types::Vector{MOGA_Type}
-    eval_fn::Function
-end
-
 abstract type Algorithm end
 abstract type GASolution end
 
-# Solutions
+#= Problem struct =#
+"""
+    Problem
+
+Expects `eval_function` to have the form `f(s.x)` where `s` is a `Solution` and
+to return a `Vector{Float64}`. If `has_constraint` is true, expects the final
+value of the returned objective vector to be zero if solution is feasible, or
+a positive Float64 indicating size of the constraint violation if infeasible.
+"""
+struct Problem
+    nobjs::Int64
+    maximize_objectives::Vector{Bool} # false -> minimize, true -> maximize
+    nvars::Int64
+    var_types::Vector{MOGA_Type}
+    eval_fn::Function
+    has_constraint::Bool
+end
+
+"no constraints constructor"
+function Problem(nobjs::Int64, maximize_objectives::Vector{Bool},
+                 nvars::Int64, var_types::Vector{MOGA_Type},
+                 eval_fn::Function)
+    Problem(nobjs, maximize_objectives, nvars, var_types,
+            eval_fn, false)
+end
+
+#= Solutions =#
+"""
+    Solution
+
+Type for candidate solutions, currently designed for NSGAII and NSGAIII.
+"""
 mutable struct Solution <: GASolution
     problem::Problem
     x::Vector{Float64}
@@ -20,6 +43,19 @@ mutable struct Solution <: GASolution
     objectives::Vector{Float64}
     crowding_distance::Float64
     rank::Int64
+    feasible::Bool
+    constraint_violation::Float64
+end
+
+"no constraints constructor"
+function Solution(problem::Problem,
+                  x::Vector{Float64},
+                  evaluated::Bool,
+                  objectives::Vector{Float64},
+                  crowding_distance::Float64,
+                  rank::Int64)
+    Solution(problem, x, evaluated, objectives, crowding_distance, rank,
+             true, 0.0)
 end
 
 "allocates a new solution that copies argument"
@@ -30,7 +66,9 @@ function copy(s::Solution)
         s.evaluated,
         copy(s.objectives),
         s.crowding_distance,
-        s.rank
+        s.rank,
+        s.feasible,
+        s.constraint_violation
     )
 end
 
@@ -42,12 +80,30 @@ function copyinto!(s_to::Solution, s_from::Solution)
     s_to.objectives .= s_from.objectives
     s_to.crowding_distance = s_from.crowding_distance
     s_to.rank = s_from.rank
+    s_to.feasible = s_from.feasible
+    s_to.constraint_violation = s_from.constraint_violation
 end
 
-"Calls s.problem.eval_fn, saves into s.objectives, sets s.evaluated to true"
+"""
+    evaluate!(s::Solution)
+
+Calls `s.problem.eval_fn`, saves into `s.objectives`, sets `s.evaluated` to
+true. If `s.problem.constraint_function` is defined, will also call this.
+"""
 function evaluate!(s::Solution)
     if !s.evaluated
-        s.objectives = s.problem.eval_fn(s.x)
+        result = s.problem.eval_fn(s.x)
+        if s.problem.has_constraint
+            println("have constraint")
+            s.feasible = result[end] == 0.0
+            s.constraint_violation = result[end]
+            s.objectives = result[1:end-1]
+            @show(s.objectives)
+        else
+            println("no constraint")
+            s.objectives = result
+            @show(s.objectives)
+        end
         s.evaluated = true
     end
     return s.objectives
@@ -98,7 +154,7 @@ function compare_pareto_dominance(s1, s2)
         o1 = s1.objectives[i]
         o2 = s2.objectives[i]
 
-        if prob.directions[i] # == MAXIMIZE
+        if prob.maximize_objectives[i] # == MAXIMIZE
             o1 = -1 * o1
             o2 = -1 * o2
         end
@@ -127,13 +183,28 @@ function compare_pareto_dominance(s1, s2)
 end
 
 
-function nondominated(solutions)
+"""
+    nondominated(solutions::Vector{Solution})
+
+Returns all nondominated elements of `solutions`. This requires constructing
+an `Archive` and inserting all solutions, so I'm not sure it's particularly fast.
+"""
+function nondominated(solutions::Vector{Solution})
     archive = Archive()
     insert_solutions!(archive, solutions)
     return archive.solutions
 end
 
-function nondominated_sort(solutions)
+
+"""
+    nondominated_sort(solutions::Vector{Solution})
+
+Implements the nondominated sort for NSGAII. This function assigns front rank
+and crowding distance scores to each solution in `solutions`. Note: better
+function name might be `assign_rank_and_crowding!`, since it does not return
+a sorted list.
+"""
+function nondominated_sort(solutions::Vector{Solution})
     rank::Int64 = 1  # TODO 08/30/18 - I just changed this to 1 to be Julian - hope nothing breaks
 
     for s in solutions
@@ -154,19 +225,43 @@ function nondominated_sort(solutions)
     end
 end
 
+
+"""
+    nondominated_cmp(x::Solution, y::Solution)
+
+Returns -1 if x dominates y, 1 if y dominates x, and 0 otherwise. In the case
+that both x and y are feasible, dominance is determined first by front rank,
+and then by crowding distance. If only one solution is feasible, it automatically
+dominates. If both are infeasbile, the solution with the smaller constraint
+violation dominates.
+"""
 function nondominated_cmp(x::Solution, y::Solution)
-    if x.rank == y.rank
-        if -x.crowding_distance < -y.crowding_distance
-            return -1
-        elseif -x.crowding_distance > -y.crowding_distance
-            return 1
+    if x.feasible && y.feasible
+        if x.rank == y.rank
+            if -x.crowding_distance < -y.crowding_distance
+                return -1
+            elseif -x.crowding_distance > -y.crowding_distance
+                return 1
+            else
+                return 0
+            end
         else
-            return 0
+            if x.rank < y.rank
+                return -1
+            elseif x.rank > y.rank
+                return 1
+            else
+                return 0
+            end
         end
+    elseif x.feasible && !y.feasible
+        return -1
+    elseif !x.feasible && y.feasible
+        return 1
     else
-        if x.rank < y.rank
+        if x.constraint_violation < y.constraint_violation
             return -1
-        elseif x.rank > y.rank
+        elseif y.constraint_violation < x.constraint_violation
             return 1
         else
             return 0
@@ -174,12 +269,22 @@ function nondominated_cmp(x::Solution, y::Solution)
     end
 end
 
-function crowding_distance(solutions)
+
+"""
+    crowding_distance(solutions::Vector{Solution})
+
+Assigns crowding distance, as defined in Deb 2002, to each element of
+`solutions`.
+"""
+function crowding_distance(solutions::Vector{Solution})
     for s in solutions
         s.crowding_distance = 0.0
     end
-
+    
+    println("crowding_distance")
+    @show(solutions[1].objectives)
     nobjs = length(solutions[1].objectives)
+    @show(nobjs)
 
     if length(solutions) < 3
         for s in solutions
@@ -209,6 +314,16 @@ function crowding_distance(solutions)
     end
 end
 
+
+"""
+    nondominated_truncate(pop::Vector{Solution}, num::Int64,
+                          dominance::Function=nondominated_cmp)
+
+Implements nondominated truncate used in NSGAII. `num` gives the desired number
+of individuals in the truncated population. The `dominance` function is used to
+determine sort order, so dominance(x, y) should return -1 if x dominates, 1 if
+y dominates, and 0 if neither dominates.
+"""
 function nondominated_truncate(pop::Vector{Solution}, num::Int64,
                                dominance::Function=nondominated_cmp)
     # maybe more efficient to not sort the whole thing but pull out by
@@ -218,6 +333,15 @@ function nondominated_truncate(pop::Vector{Solution}, num::Int64,
     return sorted[1:num]
 end
 
+
+"""
+    reference_point_truncate(
+        pop::Vector{Solution}, N::Int64, refpts::Array{Float64,2})
+
+Implements reference point truncation algorithm used in NSGAIII. `N` is the
+desired population size, and `refpts` is an array containing the reference
+points.
+"""
 function reference_point_truncate(pop::Vector{Solution}, N::Int64,
               refpts::Array{Float64, 2})
 
