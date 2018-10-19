@@ -94,15 +94,11 @@ function evaluate!(s::Solution)
     if !s.evaluated
         result = s.problem.eval_fn(s.x)
         if s.problem.has_constraint
-            println("have constraint")
             s.feasible = result[end] == 0.0
             s.constraint_violation = result[end]
             s.objectives = result[1:end-1]
-            @show(s.objectives)
         else
-            println("no constraint")
             s.objectives = result
-            @show(s.objectives)
         end
         s.evaluated = true
     end
@@ -280,11 +276,8 @@ function crowding_distance(solutions::Vector{Solution})
     for s in solutions
         s.crowding_distance = 0.0
     end
-    
-    println("crowding_distance")
-    @show(solutions[1].objectives)
+
     nobjs = length(solutions[1].objectives)
-    @show(nobjs)
 
     if length(solutions) < 3
         for s in solutions
