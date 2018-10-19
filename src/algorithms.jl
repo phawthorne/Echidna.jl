@@ -34,8 +34,7 @@ function init_pop(algo::NSGAII; seedpop::Vector{Solution}=Vector{Solution}())
                       [random_candidate(algo.problem) for i in 1:(N-length(seedpop))])
 
     for p in population
-        p.objectives = algo.eval_fn(p.x)
-        p.evaluated = true
+        evaluate!(p)
     end
 
     nondominated_sort(population)
@@ -50,8 +49,7 @@ function iter_generation(algo::NSGAII, population::Vector{Solution})
         p2 = tournament_selector(population, 2, dominance=nondominated_cmp)
         c1, c2 = [PM(c) for c in SBX(p1, p2)]
         for c in [c1, c2]
-            c.objectives = algo.eval_fn(c.x)
-            c.evaluated = true
+            evaluate!(c)
         end
         push!(population, c1, c2)
     end
@@ -109,8 +107,7 @@ function init_pop(algo::NSGAIII; seedpop::Vector{Solution}=Vector{Solution}())
                       [random_candidate(algo.problem) for i in 1:(N-length(seedpop))])
 
     for p in population
-        p.objectives = algo.eval_fn(p.x)
-        p.evaluated = true
+        evaluate!(p)
     end
 
     nondominated_sort(population)
@@ -127,8 +124,7 @@ function iter_generation(algo::NSGAIII, population::Vector{Solution})
         p2 = tournament_selector(population, 2, dominance=nondominated_cmp)
         c1, c2 = [PM(c) for c in SBX(p1, p2)]
         for c in [c1, c2]
-            c.objectives = algo.eval_fn(c.x)
-            c.evaluated = true
+            evaluate!(c)
         end
         push!(population, c1, c2)
     end
