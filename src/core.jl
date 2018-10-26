@@ -43,6 +43,7 @@ mutable struct Solution <: GASolution
     objectives::Vector{Float64}
     crowding_distance::Float64
     rank::Int64
+    generation::Int64
     feasible::Bool
     constraint_violation::Float64
 end
@@ -55,7 +56,7 @@ function Solution(problem::Problem,
                   crowding_distance::Float64,
                   rank::Int64)
     Solution(problem, x, evaluated, objectives, crowding_distance, rank,
-             true, 0.0)
+             -1, true, 0.0)
 end
 
 "allocates a new solution that copies argument"
@@ -67,6 +68,7 @@ function copy(s::Solution)
         copy(s.objectives),
         s.crowding_distance,
         s.rank,
+        s.generation,
         s.feasible,
         s.constraint_violation
     )
@@ -80,6 +82,7 @@ function copyinto!(s_to::Solution, s_from::Solution)
     s_to.objectives .= s_from.objectives
     s_to.crowding_distance = s_from.crowding_distance
     s_to.rank = s_from.rank
+    s_to.generation = s_from.generation
     s_to.feasible = s_from.feasible
     s_to.constraint_violation = s_from.constraint_violation
 end

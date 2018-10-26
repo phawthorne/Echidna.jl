@@ -18,12 +18,11 @@ end
 function garun(algo::NSGAII; seedpop::Vector{Solution}=Vector{Solution}())
     population = init_pop(algo; seedpop=seedpop)
 
-    for i in 1:algo.n_iters
-        if i % algo.archive_frequency == 0
+    for gen in 1:algo.n_iters
+        if gen % algo.archive_frequency == 0
             insert_solutions!(algo.archive, population)
         end
-        # println("$i")
-        population = iter_generation(algo, population)
+        population = iter_generation(algo, population, gen)
     end
     return population
 end
@@ -41,7 +40,7 @@ function init_pop(algo::NSGAII; seedpop::Vector{Solution}=Vector{Solution}())
     return population
 end
 
-function iter_generation(algo::NSGAII, population::Vector{Solution})
+function iter_generation(algo::NSGAII, population::Vector{Solution}, gen::Int64)
     # create N new indivs: binary tournament -> SBX/PM
     N = algo.population_size
     for i = 1:(N/2)
@@ -50,6 +49,7 @@ function iter_generation(algo::NSGAII, population::Vector{Solution})
         c1, c2 = [PM(c) for c in SBX(p1, p2)]
         for c in [c1, c2]
             evaluate!(c)
+            c.generation = gen
         end
         push!(population, c1, c2)
     end
@@ -92,10 +92,10 @@ function garun(algo::NSGAIII; seedpop::Vector{Solution}=Vector{Solution}())
 
     population = init_pop(algo; seedpop=seedpop)
 
-    for g in 1:algo.n_iters
+    for gen in 1:algo.n_iters
         println("")
-        println("generation: ", g)
-        population = iter_generation(algo, population)
+        println("generation: ", gen)
+        population = iter_generation(algo, population, gen)
     end
 
     return population
@@ -115,7 +115,7 @@ function init_pop(algo::NSGAIII; seedpop::Vector{Solution}=Vector{Solution}())
     return population
 end
 
-function iter_generation(algo::NSGAIII, population::Vector{Solution})
+function iter_generation(algo::NSGAIII, population::Vector{Solution}, gen::Int64)
     # TODO: this is copied from NSGAII - make sure there shouldn't be other changes
     # create N new indivs: binary tournament -> SBX/PM
     N = algo.population_size
@@ -125,6 +125,7 @@ function iter_generation(algo::NSGAIII, population::Vector{Solution})
         c1, c2 = [PM(c) for c in SBX(p1, p2)]
         for c in [c1, c2]
             evaluate!(c)
+            c.generation = gen
         end
         push!(population, c1, c2)
     end
