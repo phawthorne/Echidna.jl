@@ -45,7 +45,6 @@ function find_axis_intercepts(points::Array{Vector{T}, 1}, b=1) where T <: Real
 end
 
 
-
 function associate_points(
         canpoints::Array{Vector{T}, 1},
         refpoints::Array{Vector{T}, 1}) where T <: Real
@@ -61,30 +60,6 @@ function associate_points(
         s = canpoints[n]
         for r = 1:R
             w = refpoints[r]
-            dists[r] = norm( s - (dot(w, s)/dot(w, w)) * w )
-        end
-        closest_ref_index[n] = argmin(dists)
-        closest_ref_dist[n] = dists[closest_ref_index[n]]
-    end
-    return closest_ref_index, closest_ref_dist
-end
-
-
-function associate_points(
-        canpoints::Array{Vector{T}, 1},
-        refpoints::Array{T, 2}) where T <: Real
-    N = length(canpoints)
-    R = size(refpoints, 1)
-    # for each candidate point, want to find the closest reference point,
-    # measured as perpendicular distance to line through ref point and origin
-
-    closest_ref_index = zeros(Int64, N)
-    closest_ref_dist = zeros(Float64, N)
-    dists = zeros(R)
-    for n = 1:N
-        s = canpoints[n]
-        for r = 1:R
-            w = refpoints[r, :]
             dists[r] = norm( s - (dot(w, s)/dot(w, w)) * w )
         end
         closest_ref_index[n] = argmin(dists)

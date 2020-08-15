@@ -14,7 +14,7 @@ export random_candidate, candidate_from_genome, PM, PM!, SBX, SBX!
        tournament_selector
 
 include("algorithms.jl")
-export NSGAII, run_nsgaii, NSGAIII, garun, init_pop, iter_generation
+export garun, init_pop, iter_generation, NSGAII, NSGAIII
 
 include("problems.jl")
 export ZDT1

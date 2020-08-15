@@ -9,23 +9,46 @@ using Parameters
     archive_frequency::Int64
 end
 
+"""
+    multistart(algo, nstarts; seedpop)
+
+Runs the algorithm nstarts times and returns the pareto pool from each of the
+runs.
+"""
+function multistart(algo, nstarts; seedpop::Vector{Solution}=Vector{Solution}())
+    results = Vector{Vector{Solution}}()
+    for i in 1:nstarts
+        push!(results, garun(algo, seedpop=seedpop))
+    end
+    return results
+end
+
+"Convenience constructor with no archiving"
 function NSGAII(problem::Problem, eval_fn::Function, pop_size::Int64, n_iters::Int64)
     archive = Archive(compare_pareto_dominance, Vector{Solution}())
     archive_frequency = 100000000
     return NSGAII(problem, eval_fn, pop_size, n_iters, archive, archive_frequency)
 end
 
-function garun(algo::NSGAII; seedpop::Vector{Solution}=Vector{Solution}())
+"Runs the GA"
+function garun(algo::NSGAII;
+               seedpop::Vector{Solution}=Vector{Solution}(),
+               logging_frequency=0,
+               logging_destination=Nothing)
     population = init_pop(algo; seedpop=seedpop)
 
     for gen in 1:algo.n_iters
+        population = iter_generation(algo, population, gen)
         if gen % algo.archive_frequency == 0
             insert_solutions!(algo.archive, population)
         end
-        population = iter_generation(algo, population, gen)
+        if (logging_frequency > 0) & (gen % logging_frequency == 0)
+            log_population(population, gen, logging_destination)
+        end
     end
     return population
 end
+
 
 function init_pop(algo::NSGAII; seedpop::Vector{Solution}=Vector{Solution}())
     N = algo.population_size
@@ -33,13 +56,19 @@ function init_pop(algo::NSGAII; seedpop::Vector{Solution}=Vector{Solution}())
                       [random_candidate(algo.problem) for i in 1:(N-length(seedpop))])
 
     for p in population
-        evaluate!(p)
+        evaluate!(p)  # distribute
     end
 
     nondominated_sort(population)
     return population
 end
 
+
+"""
+    iter_generation(algo, population, gen)
+
+Performs one generation of the GA. Returns the new child population.
+"""
 function iter_generation(algo::NSGAII, population::Vector{Solution}, gen::Int64)
     # create N new indivs: binary tournament -> SBX/PM
     N = algo.population_size
@@ -63,6 +92,7 @@ function iter_generation(algo::NSGAII, population::Vector{Solution}, gen::Int64)
     return population
 end
 
+
 # TODO: add Archive to NSGAIII
 @with_kw mutable struct NSGAIII <: Algorithm
     problem::Problem
@@ -73,6 +103,7 @@ end
     n_iters::Int64
     reference_points::Array{Float64, 2}
 end
+
 
 function NSGAIII(problem::Problem, evalfn::Function, ndivs::Int, niters::Int)
     refpts = generate_regular_reference_points(problem.nobjs, ndivs)
@@ -101,6 +132,7 @@ function garun(algo::NSGAIII; seedpop::Vector{Solution}=Vector{Solution}())
     return population
 end
 
+
 function init_pop(algo::NSGAIII; seedpop::Vector{Solution}=Vector{Solution}())
     N = algo.population_size
     population = vcat(seedpop,
@@ -114,6 +146,7 @@ function init_pop(algo::NSGAIII; seedpop::Vector{Solution}=Vector{Solution}())
 
     return population
 end
+
 
 function iter_generation(algo::NSGAIII, population::Vector{Solution}, gen::Int64)
     # TODO: this is copied from NSGAII - make sure there shouldn't be other changes

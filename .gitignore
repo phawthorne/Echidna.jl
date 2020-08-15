@@ -1,2 +1,4 @@
 # Specify filepatterns you want git to ignore.
 docs/build/*
+.vscode/*
+.DS_Store

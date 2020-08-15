@@ -1,7 +1,7 @@
 using Documenter, Echidna
 push!(LOAD_PATH,"../src/")
 makedocs(
-    format = :html,
+    format = Documenter.HTML(),
     modules = [Echidna],
     sitename = "Echidna.jl",
     pages = [
