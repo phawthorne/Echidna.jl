@@ -42,7 +42,7 @@ function garun(algo::NSGAII;
         if gen % algo.archive_frequency == 0
             insert_solutions!(algo.archive, population)
         end
-        if (logging_frequency > 0) & (gen % logging_frequency == 0)
+        if (logging_frequency > 0) && (gen % logging_frequency == 0)
             log_population(population, gen, logging_destination)
         end
     end
