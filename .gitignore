@@ -3,3 +3,4 @@ docs/build/*
 .vscode/*
 .DS_Store
 Echidna.code-workspace
+notebooks/*
