@@ -2,10 +2,12 @@
 language: julia
 
 os:
+  - osx
   - linux
 
 julia:
   - 1.5
+  - nightly
 
 branches:
   only:
@@ -13,14 +15,14 @@ branches:
     - /^release-.*$/
     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
-notifications:
-  email: false
 
 codecov: true
 coveralls: true
 
 
 jobs:
+  allow_failures:
+    - julia: nightly
   include:
     - stage: "Documentation"
       julia: 1.5
@@ -30,3 +32,5 @@ jobs:
         - julia --project=docs/ --color=yes docs/make.jl
       after_success: skip
 
+notifications:
+  email: false
