@@ -1,4 +1,4 @@
-# Documentation for Echidna
+# Introduction
 
-Adaptation of David Hadka's Platypus library to Julia. So far have working
-NSGAII and NSGAIII models. 
+Echidna provides implementations of NSGA-II and NSGA-III evolutionary algorithms heavily inspired by [Platypus](https://github.com/Project-Platypus/Platypus).
+
