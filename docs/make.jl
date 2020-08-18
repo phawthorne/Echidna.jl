@@ -1,16 +1,8 @@
-# using Documenter, Echidna
-# push!(LOAD_PATH,"../src/")
-# makedocs(
-#     format = Documenter.HTML(),
-#     modules = [Echidna],
-#     sitename = "Echidna.jl",
-#     pages = [
-#         "Home" => "index.md",
-#     ]
-# )
-
 import Pkg
-Pkg.activate("..")
+
+if get(ENV, "CI", nothing) === nothing
+    Pkg.activate("..")
+end
 
 using Documenter, Echidna
 
@@ -27,6 +19,8 @@ makedocs(
     pages = Any["index.md"]
 )
 
-deploydocs(
-    repo = "github.com/phawthorne/Echidna.git"
-)
+if get(ENV, "CI", nothing) == "true"
+    deploydocs(
+        repo = "github.com/phawthorne/Echidna.git"
+    )
+end
