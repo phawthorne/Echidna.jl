@@ -13,5 +13,5 @@ zdt1_problem = Problem(
 )
 
 config = NSGAII(zdt1_problem, ZDT1, pop_size, n_iters)
-result = run_nsgaii(config)
+result = garun(config)
 @test length(result) == pop_size

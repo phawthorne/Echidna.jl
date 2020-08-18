@@ -24,9 +24,8 @@ end
 
 "no constraints constructor"
 function Problem(nobjs::Int64, maximize_objectives::Vector{Bool},
-                 nvars::Int64, var_types::Vector{MOGA_Type},
-                 eval_fn::Function)
-    # TODO: this doesn't work - there is some problem matching the Function type
+                 nvars::Int64, var_types::Vector{T},
+                 eval_fn::F) where {T <: MOGA_Type, F <: Function}
     Problem(nobjs, maximize_objectives, nvars, var_types,
             eval_fn, false)
 end
