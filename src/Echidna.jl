@@ -26,4 +26,7 @@ include("geom_ops.jl")
 export find_extreme_points, find_hyperplane_params, find_axis_intercepts,
        associate_points
 
+include("logging.jl")
+export log_population
+
 end # module
