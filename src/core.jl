@@ -59,7 +59,15 @@ function Solution(problem::Problem,
              -1, true, 0.0)
 end
 
-"allocates a new solution that copies argument"
+"construct a candidate `Solutions` with a specific genome"
+function Solution(problem::Problem,
+                  x::Vector{Float64};
+                  generation::Int64=-1)
+    Solution(problem, x, false, zeros(problem.nobjs), 0.0, 0,
+        generation, true, 0)
+end
+
+"allocate a new solution that copies argument"
 function copy(s::Solution)
     return Solution(
         s.problem,
@@ -91,7 +99,9 @@ end
     evaluate!(s::Solution)
 
 Calls `s.problem.eval_fn`, saves into `s.objectives`, sets `s.evaluated` to
-true. If `s.problem.constraint_function` is defined, will also call this.
+true. If `s.problem.has_constraint` is `true`, the last value in the objective
+score array is treated as the magnitude of constraint violation, and the point
+is considered feasible if the constraint violation is 0.
 """
 function evaluate!(s::Solution)
     if !s.evaluated
