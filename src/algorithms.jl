@@ -26,20 +26,21 @@ end
 "Convenience constructor with no archiving"
 function NSGAII(problem::Problem, eval_fn::Function, pop_size::Int64, n_iters::Int64)
     archive = Archive(compare_pareto_dominance, Vector{Solution}())
-    archive_frequency = 100000000
+    archive_frequency = 0
     return NSGAII(problem, eval_fn, pop_size, n_iters, archive, archive_frequency)
 end
 
-"Runs the GA"
+"Run the NSGAII algorithm"
 function garun(algo::NSGAII;
+               starting_gen=1,  # set a different value for restarts
                seedpop::Vector{Solution}=Vector{Solution}(),
                logging_frequency=0,
                logging_destination=Nothing)
     population = init_pop(algo; seedpop=seedpop)
 
-    for gen in 1:algo.n_iters
+    for gen in starting_gen:algo.n_iters
         population = iter_generation(algo, population, gen)
-        if gen % algo.archive_frequency == 0
+        if (algo.archive_frequency > 0) && (gen % algo.archive_frequency == 0)
             insert_solutions!(algo.archive, population)
         end
         if (logging_frequency > 0) && (gen % logging_frequency == 0)
@@ -67,7 +68,7 @@ end
 """
     iter_generation(algo, population, gen)
 
-Performs one generation of the GA. Returns the new child population.
+Perform one generation of the GA. Returns the new child population.
 """
 function iter_generation(algo::NSGAII, population::Vector{Solution}, gen::Int64)
     # create N new indivs: binary tournament -> SBX/PM
