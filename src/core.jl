@@ -54,15 +54,16 @@ function Solution(problem::Problem,
                   evaluated::Bool,
                   objectives::Vector{Float64},
                   crowding_distance::Float64,
-                  rank::Int64)
+                  rank::Int64;
+                  generation::Int64=0)
     Solution(problem, x, evaluated, objectives, crowding_distance, rank,
-             -1, true, 0.0)
+             generation, true, 0.0)
 end
 
 "construct a candidate `Solutions` with a specific genome"
 function Solution(problem::Problem,
                   x::Vector{Float64};
-                  generation::Int64=-1)
+                  generation::Int64=0)
     Solution(problem, x, false, zeros(problem.nobjs), 0.0, 0,
         generation, true, 0)
 end
