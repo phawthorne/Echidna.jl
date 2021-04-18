@@ -7,6 +7,7 @@ using Parameters
     n_iters::Int64
     archive::Archive
     archive_frequency::Int64
+    maxtime::Float64            # in seconds
 end
 
 """
@@ -23,11 +24,11 @@ function multistart(algo, nstarts; seedpop::Vector{Solution}=Vector{Solution}())
     return results
 end
 
-"Convenience constructor with no archiving"
-function NSGAII(problem::Problem, eval_fn::Function, pop_size::Int64, n_iters::Int64)
+"Convenience constructor with no archiving, kwarg for setting maxtime"
+function NSGAII(problem::Problem, eval_fn::Function, pop_size::Int64, n_iters::Int64, maxtime=0.0)
     archive = Archive(compare_pareto_dominance, Vector{Solution}())
     archive_frequency = 0
-    return NSGAII(problem, eval_fn, pop_size, n_iters, archive, archive_frequency)
+    return NSGAII(problem, eval_fn, pop_size, n_iters, archive, archive_frequency, maxtime)
 end
 
 "Run the NSGAII algorithm"
@@ -38,6 +39,8 @@ function garun(algo::NSGAII;
                logging_destination=Nothing)
     population = init_pop(algo; seedpop=seedpop)
 
+    start_time = time()
+
     for gen in starting_gen:algo.n_iters
         population = iter_generation(algo, population, gen)
         if (algo.archive_frequency > 0) && (gen % algo.archive_frequency == 0)
@@ -46,7 +49,11 @@ function garun(algo::NSGAII;
         if (logging_frequency > 0) && (gen % logging_frequency == 0)
             log_population(population, gen, logging_destination)
         end
+        if (algo.maxtime > 0) && (time() - start_time > algo.maxtime)
+            break
+        end
     end
+
     return population
 end
 
