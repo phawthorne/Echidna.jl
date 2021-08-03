@@ -215,8 +215,8 @@ function name might be `assign_rank_and_crowding!`, since it does not return
 a sorted list.
 """
 function nondominated_sort(solutions::Vector{Solution})
-    rank::Int64 = 1  # TODO 08/30/18 - I just changed this to 1 to be Julian - hope nothing breaks
-
+    rank::Int64 = 1
+    
     for s in solutions
         s.rank = -1
     end
