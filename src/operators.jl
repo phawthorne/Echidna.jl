@@ -32,6 +32,12 @@ function candidate_from_genome(problem::Problem, genome)
     )
 end
 
+"""
+    tournament_selector(population::Vector{Solution}, tournament_size::Int, dominance::Function)
+
+Return a `Solution` selected from `population` based on `dominance`. Individual is selected as the 
+winner from among a random selection of `tournament_size` draws from `population`. 
+"""
 function tournament_selector(population::Vector{Solution}, tournament_size::Int;
                              dominance::Function=compare_pareto_dominance)
     popsize = length(population)

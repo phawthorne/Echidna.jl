@@ -36,13 +36,14 @@ function garun(algo::NSGAII;
                starting_gen=1,  # set a different value for restarts
                seedpop::Vector{Solution}=Vector{Solution}(),
                logging_frequency=0,
-               logging_destination=Nothing)
+               logging_destination=Nothing,
+               threaded_eval=false)
     population = init_pop(algo; seedpop=seedpop)
 
     start_time = time()
 
     for gen in starting_gen:algo.n_iters
-        population = iter_generation(algo, population, gen)
+        population = iter_generation(algo, population, gen, threaded_eval)
         if (algo.archive_frequency > 0) && (gen % algo.archive_frequency == 0)
             insert_solutions!(algo.archive, population)
         end
@@ -99,6 +100,49 @@ function iter_generation(algo::NSGAII, population::Vector{Solution}, gen::Int64)
 
     return population
 end
+
+"""
+    iter_generation(algo, population, gen, thread_flag)
+
+Perform one generation of the GA. Returns the new child population. 
+
+This is a version that postpones the evaluations to do them with
+threading. 
+"""
+function iter_generation(algo::NSGAII, population::Vector{Solution}, gen::Int64, thread_flag::Bool)
+    if thread_flag == false
+        # run the normal version
+        iter_generation(algo, population, gen)
+    end
+    # create N new indivs: binary tournament -> SBX/PM
+    N = algo.population_size
+    new_indivs = Vector{Solution}
+    for i = 1:(N/2)
+        p1 = tournament_selector(population, 2, dominance=nondominated_cmp)
+        p2 = tournament_selector(population, 2, dominance=nondominated_cmp)
+        c1, c2 = [PM(c) for c in SBX(p1, p2)]
+        for c in [c1, c2]
+            c.generation = gen
+        end
+        push!(new_indivs, c1, c2)
+    end
+
+    @Threads.thread for indiv in new_indivs
+        evaluate!(indiv)
+    end
+
+    population = vcat(population, new_indivs)
+
+    # assign ranks and crowding_distance
+    nondominated_sort(population)
+
+    # select best N as next generation
+    population = nondominated_truncate(population, N)
+
+    return population
+end
+
+
 
 
 # TODO: add Archive to NSGAIII
