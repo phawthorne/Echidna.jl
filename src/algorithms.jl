@@ -116,7 +116,7 @@ function iter_generation(algo::NSGAII, population::Vector{Solution}, gen::Int64,
     end
     # create N new indivs: binary tournament -> SBX/PM
     N = algo.population_size
-    new_indivs = Vector{Solution}
+    new_indivs = Vector{Solution}()
     for i = 1:(N/2)
         p1 = tournament_selector(population, 2, dominance=nondominated_cmp)
         p2 = tournament_selector(population, 2, dominance=nondominated_cmp)
