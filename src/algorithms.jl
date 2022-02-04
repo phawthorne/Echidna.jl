@@ -102,15 +102,15 @@ function iter_generation(algo::NSGAII, population::Vector{Solution}, gen::Int64)
 end
 
 """
-    iter_generation(algo, population, gen, thread_flag)
+    iter_generation(algo, population, gen, threaded_eval)
 
 Perform one generation of the GA. Returns the new child population. 
 
 This is a version that postpones the evaluations to do them with
 threading. 
 """
-function iter_generation(algo::NSGAII, population::Vector{Solution}, gen::Int64, thread_flag::Bool)
-    if thread_flag == false
+function iter_generation(algo::NSGAII, population::Vector{Solution}, gen::Int64, threaded_eval::Bool)
+    if threaded_eval == false
         # run the normal version
         iter_generation(algo, population, gen)
     end
@@ -127,7 +127,7 @@ function iter_generation(algo::NSGAII, population::Vector{Solution}, gen::Int64,
         push!(new_indivs, c1, c2)
     end
 
-    @Threads.thread for indiv in new_indivs
+    @Threads.threads for indiv in new_indivs
         evaluate!(indiv)
     end
 
