@@ -24,6 +24,7 @@ function multistart(algo, nstarts; seedpop::Vector{Solution}=Vector{Solution}())
     return results
 end
 
+
 "Convenience constructor with no archiving, kwarg for setting maxtime"
 function NSGAII(problem::Problem, eval_fn::Function, pop_size::Int64, n_iters::Int64, maxtime=0.0)
     archive = Archive(compare_pareto_dominance, Vector{Solution}())
@@ -36,12 +37,16 @@ function garun(algo::NSGAII;
                starting_gen=1,  # set a different value for restarts
                seedpop::Vector{Solution}=Vector{Solution}(),
                logging_frequency=0,
-               logging_destination=Nothing)
+               logging_destination=Nothing,
+               print_gen::Bool=false)
     population = init_pop(algo; seedpop=seedpop)
 
     start_time = time()
 
     for gen in starting_gen:algo.n_iters
+        if print_gen
+            println("generation: ", gen)
+        end
         population = iter_generation(algo, population, gen)
         if (algo.archive_frequency > 0) && (gen % algo.archive_frequency == 0)
             insert_solutions!(algo.archive, population)
